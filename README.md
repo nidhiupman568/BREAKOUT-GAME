@@ -2,6 +2,8 @@
 
 🎉 Welcome to my **Breakout Game (Brick Breaker)**! 🎉 This project recreates the classic arcade game using **HTML** 📝, **CSS** 🎨, and **JavaScript** 💻 with **HTML5 Canvas** 🎮.
 
+Project Demo: https://nidhiupman568.github.io/BREAKOUT-GAME/
+
 ## ✨ Features ✨
 
 - **Game Loop** 🔄: Implements a smooth game loop for continuous gameplay updates.
