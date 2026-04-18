@@ -1,5 +1,8 @@
 body {
     text-align: center;
+    background-color: #1a1a1a;
+    color: white;
+    font-family: Arial, sans-serif;
 }
 
 #board {
@@ -7,4 +10,44 @@ body {
     border-top: 5px solid skyblue;
     border-left: 5px solid skyblue;
     border-right: 5px solid skyblue;
+    display: none;
+}
+
+.menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid skyblue;
+}
+
+.menu h2 {
+    color: skyblue;
+    margin-top: 0;
+    margin-bottom: 30px;
+    font-size: 32px;
+}
+
+.menu button {
+    display: block;
+    width: 200px;
+    margin: 15px auto;
+    padding: 15px;
+    font-size: 18px;
+    background-color: skyblue;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.menu button:hover {
+    background-color: #87CEFA;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px skyblue;
 }
