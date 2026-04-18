@@ -1,4 +1,3 @@
-// Game states
 const GameState = {
     MENU: 'menu',
     LEVEL_SELECT: 'level_select',
@@ -11,16 +10,15 @@ let currentGameState = GameState.MENU;
 let currentLevel = 1;
 const maxLevels = 10;
 
-// Board
 let board;
 let boardWidth = 500;
 let boardHeight = 500;
 let context;
 
-// Player (paddle)
 let playerWidth = 80;
 let playerHeight = 10;
-let playerVelocityX = 50; // 默认速度
+let playerVelocityX = 50;
+let ballBaseSpeed = 5;
 
 let player = {
     x: boardWidth / 2 - playerWidth / 2,
@@ -32,43 +30,34 @@ let player = {
     widthTimer: 0
 };
 
-// Balls
 let ballWidth = 10;
 let ballHeight = 10;
-let ballVelocityX = 3;
-let ballVelocityY = 2;
 
 let balls = [];
 
-// Blocks
 let blockArray = [];
 let blockWidth = 50;
 let blockHeight = 10;
-let blockColumns = 8;
-let blockRows = 3;
 let blockCount = 0;
 
 let blockX = 15;
-let blockY = 45;
+let blockY = 60;
 
-// Walls
 let walls = [];
+let innerWalls = [];
 let wallThickness = 10;
 
-// Power-ups
 let powerUps = [];
 let powerUpWidth = 20;
 let powerUpHeight = 20;
 let powerUpSpeed = 2;
 
-// Power-up types
 const PowerUpType = {
     EXTEND: 'extend',
     PIERCE: 'pierce',
     MULTI: 'multi'
 };
 
-// Power-up notification
 let powerUpNotification = {
     text: '',
     timer: 0,
@@ -77,12 +66,10 @@ let powerUpNotification = {
 
 let score = 0;
 
-// DOM elements
 let mainMenu, levelSelect, startGameBtn, selectLevelBtn;
-let backToMenuBtn, speedSlider, speedValue;
+let backToMenuBtn, speedSlider, speedValue, ballSpeedSlider, ballSpeedValue;
 
 window.onload = function() {
-    // Get DOM elements
     mainMenu = document.getElementById('mainMenu');
     levelSelect = document.getElementById('levelSelect');
     startGameBtn = document.getElementById('startGameBtn');
@@ -90,19 +77,18 @@ window.onload = function() {
     backToMenuBtn = document.getElementById('backToMenuBtn');
     speedSlider = document.getElementById('speedSlider');
     speedValue = document.getElementById('speedValue');
+    ballSpeedSlider = document.getElementById('ballSpeedSlider');
+    ballSpeedValue = document.getElementById('ballSpeedValue');
     
-    // Setup canvas
     board = document.getElementById('board');
     board.height = boardHeight;
     board.width = boardWidth;
     context = board.getContext('2d');
     
-    // Add event listeners for menu buttons
     startGameBtn.addEventListener('click', startGame);
     selectLevelBtn.addEventListener('click', showLevelSelect);
     backToMenuBtn.addEventListener('click', showMainMenu);
     
-    // Add level button listeners
     for (let i = 1; i <= 10; i++) {
         const btn = document.getElementById('level' + i + 'Btn');
         if (btn) {
@@ -110,17 +96,19 @@ window.onload = function() {
         }
     }
     
-    // Speed slider listener
     speedSlider.addEventListener('input', function() {
         playerVelocityX = parseInt(this.value);
         speedValue.textContent = this.value;
         player.velocityX = playerVelocityX;
     });
     
-    // Keyboard controls
+    ballSpeedSlider.addEventListener('input', function() {
+        ballBaseSpeed = parseInt(this.value);
+        ballSpeedValue.textContent = this.value;
+    });
+    
     document.addEventListener('keydown', handleKeyDown);
     
-    // Start the game loop
     requestAnimationFrame(gameLoop);
 };
 
@@ -167,21 +155,20 @@ function startLevel(level) {
 function loadLevel(level) {
     blockArray = [];
     walls = [];
+    innerWalls = [];
     powerUps = [];
     
-    // Clear all balls except the first one
     balls = [{
         x: boardWidth / 2 - ballWidth / 2,
-        y: boardHeight / 2,
+        y: boardHeight - 80,
         width: ballWidth,
         height: ballHeight,
-        velocityX: ballVelocityX * (Math.random() > 0.5 ? 1 : -1),
-        velocityY: -ballVelocityY,
+        velocityX: ballBaseSpeed * (Math.random() > 0.5 ? 1 : -1),
+        velocityY: -ballBaseSpeed * 0.7,
         piercing: false,
         pierceTimer: 0
     }];
     
-    // Reset player
     player = {
         x: boardWidth / 2 - playerWidth / 2,
         y: boardHeight - playerHeight - 5,
@@ -192,206 +179,189 @@ function loadLevel(level) {
         widthTimer: 0
     };
     
-    // Load specific level layout
     switch(level) {
-        case 1:
-            createLevel1();
-            break;
-        case 2:
-            createLevel2();
-            break;
-        case 3:
-            createLevel3();
-            break;
-        case 4:
-            createLevel4();
-            break;
-        case 5:
-            createLevel5();
-            break;
-        case 6:
-            createLevel6();
-            break;
-        case 7:
-            createLevel7();
-            break;
-        case 8:
-            createLevel8();
-            break;
-        case 9:
-            createLevel9();
-            break;
-        case 10:
-            createLevel10();
-            break;
+        case 1: createLevel1(); break;
+        case 2: createLevel2(); break;
+        case 3: createLevel3(); break;
+        case 4: createLevel4(); break;
+        case 5: createLevel5(); break;
+        case 6: createLevel6(); break;
+        case 7: createLevel7(); break;
+        case 8: createLevel8(); break;
+        case 9: createLevel9(); break;
+        case 10: createLevel10(); break;
     }
 }
 
-// Level 1: Basic grid, no walls
+function createOuterWalls() {
+    walls.push({ x: 0, y: 0, width: wallThickness, height: boardHeight, color: '#666' });
+    walls.push({ x: boardWidth - wallThickness, y: 0, width: wallThickness, height: boardHeight, color: '#666' });
+    walls.push({ x: 0, y: 0, width: boardWidth, height: wallThickness, color: '#666' });
+}
+
+// Level 1: 入门 - 无墙，简单网格
 function createLevel1() {
-    createBlockGrid(8, 3, 'skyblue');
-}
-
-// Level 2: Grid with walls, some gaps
-function createLevel2() {
-    createWalls();
-    createBlockGrid(7, 4, 'orange');
-    // Add some random gaps
-    for (let i = 0; i < 4; i++) {
-        let randomIndex = Math.floor(Math.random() * blockArray.length);
-        if (blockArray[randomIndex] && !blockArray[randomIndex].break) {
-            blockArray[randomIndex].break = true;
-            blockCount--;
-        }
-    }
-}
-
-// Level 3: Inverted pyramid with walls
-function createLevel3() {
-    createWalls();
-    createPyramidBlocks();
-}
-
-// Level 4: Staircase pattern (no walls)
-function createLevel4() {
     blockArray = [];
-    let rows = 5;
-    for (let r = 0; r < rows; r++) {
-        let cols = r + 2;
-        for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 8; c++) {
             addBlock(
                 blockX + c * blockWidth + c * 10,
+                blockY + r * blockHeight + r * 10,
+                'skyblue'
+            );
+        }
+    }
+    blockCount = blockArray.length;
+}
+
+// Level 2: 外围墙 + 中间一道横障碍墙
+function createLevel2() {
+    createOuterWalls();
+    
+    innerWalls.push({
+        x: 60,
+        y: 200,
+        width: boardWidth - 120,
+        height: wallThickness,
+        color: '#888'
+    });
+    
+    blockArray = [];
+    for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 7; c++) {
+            addBlock(
+                wallThickness + 25 + c * blockWidth + c * 10,
+                blockY + r * blockHeight + r * 10,
+                'orange'
+            );
+        }
+    }
+    blockCount = blockArray.length;
+}
+
+// Level 3: 外围墙 + 中间竖墙（分左右两区）
+function createLevel3() {
+    createOuterWalls();
+    
+    innerWalls.push({
+        x: boardWidth / 2 - wallThickness / 2,
+        y: 60,
+        width: wallThickness,
+        height: 140,
+        color: '#888'
+    });
+    
+    blockArray = [];
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 3; c++) {
+            addBlock(
+                wallThickness + 20 + c * blockWidth + c * 10,
                 blockY + r * blockHeight + r * 10,
                 'lime'
             );
-        }
-    }
-    blockCount = blockArray.length;
-}
-
-// Level 5: Heart-shaped empty center with walls
-function createLevel5() {
-    createWalls();
-    blockArray = [];
-    
-    // Create a grid with heart-shaped hole
-    let centerX = boardWidth / 2;
-    let centerY = blockY + blockHeight * 2;
-    
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 8; c++) {
-            let bx = blockX + c * blockWidth + c * 10;
-            let by = blockY + r * blockHeight + r * 10;
-            let blockCenterX = bx + blockWidth / 2;
-            let blockCenterY = by + blockHeight / 2;
-            
-            // Heart formula (simplified)
-            let dx = (blockCenterX - centerX) / 80;
-            let dy = -(blockCenterY - centerY) / 60;
-            
-            // Skip blocks in heart shape
-            let inHeart = Math.pow(dx * dx + dy * dy - 1, 3) - dx * dx * dy * dy * dy < 0;
-            if (!inHeart && r > 0) {
-                addBlock(bx, by, 'pink');
-            } else if (r === 0) {
-                addBlock(bx, by, 'pink');
-            }
-        }
-    }
-    blockCount = blockArray.length;
-}
-
-// Level 6: Double nested frame with walls
-function createLevel6() {
-    createWalls();
-    blockArray = [];
-    
-    // Outer frame
-    for (let c = 0; c < 8; c++) {
-        addBlock(blockX + c * blockWidth + c * 10, blockY, 'cyan');
-        addBlock(blockX + c * blockWidth + c * 10, blockY + 4 * blockHeight + 4 * 10, 'cyan');
-    }
-    for (let r = 0; r < 5; r++) {
-        addBlock(blockX, blockY + r * blockHeight + r * 10, 'cyan');
-        addBlock(blockX + 7 * blockWidth + 7 * 10, blockY + r * blockHeight + r * 10, 'cyan');
-    }
-    
-    // Inner frame
-    let innerX = blockX + blockWidth + 20;
-    let innerY = blockY + blockHeight + 20;
-    for (let c = 0; c < 6; c++) {
-        addBlock(innerX + c * blockWidth + c * 10, innerY, 'yellow');
-        addBlock(innerX + c * blockWidth + c * 10, innerY + 2 * blockHeight + 2 * 10, 'yellow');
-    }
-    for (let r = 0; r < 3; r++) {
-        addBlock(innerX, innerY + r * blockHeight + r * 10, 'yellow');
-        addBlock(innerX + 5 * blockWidth + 5 * 10, innerY + r * blockHeight + r * 10, 'yellow');
-    }
-    
-    blockCount = blockArray.length;
-}
-
-// Level 7: Zigzag pattern (no walls)
-function createLevel7() {
-    blockArray = [];
-    let rows = 6;
-    
-    for (let r = 0; r < rows; r++) {
-        let startCol = r % 2 === 0 ? 0 : 1;
-        for (let c = startCol; c < 8; c += 2) {
-            let color = r % 2 === 0 ? 'orange' : 'skyblue';
             addBlock(
-                blockX + c * blockWidth + c * 10,
+                boardWidth / 2 + 20 + c * blockWidth + c * 10,
                 blockY + r * blockHeight + r * 10,
-                color
+                'pink'
             );
         }
     }
     blockCount = blockArray.length;
 }
 
-// Level 8: Circular ring pattern with walls
-function createLevel8() {
-    createWalls();
+// Level 4: 外围墙 + L形障碍墙
+function createLevel4() {
+    createOuterWalls();
+    
+    innerWalls.push({
+        x: 100,
+        y: 150,
+        width: 150,
+        height: wallThickness,
+        color: '#888'
+    });
+    innerWalls.push({
+        x: 100,
+        y: 150,
+        width: wallThickness,
+        height: 80,
+        color: '#888'
+    });
+    
     blockArray = [];
-    
-    let centerX = boardWidth / 2;
-    let centerY = blockY + blockHeight * 3;
-    
-    // Create concentric circles
-    for (let ring = 0; ring < 3; ring++) {
-        let radius = 60 + ring * 40;
-        let numBlocks = 8 + ring * 4;
-        
-        for (let i = 0; i < numBlocks; i++) {
-            let angle = (i / numBlocks) * Math.PI * 2;
-            let bx = centerX + Math.cos(angle) * radius - blockWidth / 2;
-            let by = centerY + Math.sin(angle) * radius * 0.6 - blockHeight / 2;
-            
-            // Only add if within reasonable area
-            if (by > blockY && by < blockY + blockHeight * 7) {
-                let colors = ['skyblue', 'orange', 'lime', 'pink', 'cyan'];
-                addBlock(bx, by, colors[ring]);
-            }
+    for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 7; c++) {
+            addBlock(
+                wallThickness + 25 + c * blockWidth + c * 10,
+                blockY + r * blockHeight + r * 10,
+                'cyan'
+            );
         }
     }
     blockCount = blockArray.length;
 }
 
-// Level 9: Chaotic random pattern (no walls)
-function createLevel9() {
-    blockArray = [];
+// Level 5: 外围墙 + 左右竖墙（3通道）
+function createLevel5() {
+    createOuterWalls();
     
-    // Create a base grid
-    for (let r = 0; r < 7; r++) {
-        for (let c = 0; c < 8; c++) {
-            // 70% chance to place a block
-            if (Math.random() < 0.7) {
-                let colors = ['skyblue', 'orange', 'lime', 'pink', 'yellow', 'cyan'];
+    innerWalls.push({
+        x: 150,
+        y: 80,
+        width: wallThickness,
+        height: 150,
+        color: '#888'
+    });
+    innerWalls.push({
+        x: 340,
+        y: 80,
+        width: wallThickness,
+        height: 150,
+        color: '#888'
+    });
+    
+    blockArray = [];
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 2; c++) {
+            addBlock(
+                wallThickness + 20 + c * blockWidth + c * 10,
+                blockY + r * blockHeight + r * 10,
+                'yellow'
+            );
+            addBlock(
+                180 + c * blockWidth + c * 10,
+                blockY + r * blockHeight + r * 10,
+                'orange'
+            );
+            addBlock(
+                370 + c * blockWidth + c * 10,
+                blockY + r * blockHeight + r * 10,
+                'skyblue'
+            );
+        }
+    }
+    blockCount = blockArray.length;
+}
+
+// Level 6: 外围墙 + 迷宫式障碍（交替短墙）
+function createLevel6() {
+    createOuterWalls();
+    
+    innerWalls.push({ x: 60, y: 120, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: 340, y: 120, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: 150, y: 170, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: 250, y: 170, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: 100, y: 220, width: 80, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: 320, y: 220, width: 80, height: wallThickness, color: '#888' });
+    
+    blockArray = [];
+    for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 7; c++) {
+            if (!((r === 1 && (c === 2 || c === 5)) || (r === 2 && (c === 3 || c === 4)))) {
                 addBlock(
-                    blockX + c * blockWidth + c * 10,
+                    wallThickness + 25 + c * blockWidth + c * 10,
                     blockY + r * blockHeight + r * 10,
-                    colors[Math.floor(Math.random() * colors.length)]
+                    ['skyblue', 'orange', 'lime', 'pink', 'yellow'][r % 5]
                 );
             }
         }
@@ -399,111 +369,122 @@ function createLevel9() {
     blockCount = blockArray.length;
 }
 
-// Level 10: Ultimate challenge - dense with walls and strategic gaps
-function createLevel10() {
-    createWalls();
+// Level 7: 无外围墙 + 内部浮动障碍墙
+function createLevel7() {
+    innerWalls.push({ x: 80, y: 130, width: 80, height: wallThickness, color: '#aaa' });
+    innerWalls.push({ x: 340, y: 130, width: 80, height: wallThickness, color: '#aaa' });
+    innerWalls.push({ x: 200, y: 180, width: 100, height: wallThickness, color: '#aaa' });
+    innerWalls.push({ x: 150, y: 230, width: 60, height: wallThickness, color: '#aaa' });
+    innerWalls.push({ x: 290, y: 230, width: 60, height: wallThickness, color: '#aaa' });
+    
     blockArray = [];
-    
-    // Full dense grid first
-    for (let r = 0; r < 7; r++) {
-        for (let c = 0; c < 7; c++) {
-            let colors = ['red', 'orange', 'yellow', 'lime', 'cyan', 'skyblue', 'pink'];
+    for (let r = 0; r < 5; r++) {
+        let cols = r % 2 === 0 ? 8 : 7;
+        let offset = r % 2 === 0 ? 0 : 30;
+        for (let c = 0; c < cols; c++) {
             addBlock(
-                blockX + wallThickness + c * blockWidth + c * 10,
+                blockX + offset + c * blockWidth + c * 10,
                 blockY + r * blockHeight + r * 10,
-                colors[r]
-            );
-        }
-    }
-    
-    // Add some strategic gaps for difficulty
-    let gaps = [
-        {r: 3, c: 3},
-        {r: 2, c: 1},
-        {r: 4, c: 5},
-        {r: 1, c: 5},
-        {r: 5, c: 2}
-    ];
-    
-    for (let gap of gaps) {
-        // Find and remove that block
-        for (let i = blockArray.length - 1; i >= 0; i--) {
-            let block = blockArray[i];
-            let expectedX = blockX + wallThickness + gap.c * blockWidth + gap.c * 10;
-            let expectedY = blockY + gap.r * blockHeight + gap.r * 10;
-            
-            if (Math.abs(block.x - expectedX) < 5 && Math.abs(block.y - expectedY) < 5) {
-                blockArray.splice(i, 1);
-                blockCount--;
-                break;
-            }
-        }
-    }
-}
-
-// Helper functions
-function createWalls() {
-    walls.push({
-        x: 0,
-        y: 0,
-        width: wallThickness,
-        height: boardHeight
-    });
-    
-    walls.push({
-        x: boardWidth - wallThickness,
-        y: 0,
-        width: wallThickness,
-        height: boardHeight
-    });
-    
-    walls.push({
-        x: 0,
-        y: 0,
-        width: boardWidth,
-        height: wallThickness
-    });
-}
-
-function createBlockGrid(columns, rows, color) {
-    blockColumns = columns;
-    blockRows = rows;
-    blockArray = [];
-    
-    let startX = walls.length > 0 ? blockX + wallThickness : blockX;
-    let availableWidth = walls.length > 0 ? boardWidth - 2 * wallThickness : boardWidth;
-    let totalBlockWidth = columns * blockWidth + (columns - 1) * 10;
-    let centerOffset = (availableWidth - totalBlockWidth) / 2;
-    
-    for (let c = 0; c < columns; c++) {
-        for (let r = 0; r < rows; r++) {
-            addBlock(
-                startX + centerOffset + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
-                color
+                ['lime', 'skyblue'][r % 2]
             );
         }
     }
     blockCount = blockArray.length;
 }
 
-function createPyramidBlocks() {
-    blockArray = [];
-    let startX = walls.length > 0 ? blockX + wallThickness : blockX;
-    let availableWidth = walls.length > 0 ? boardWidth - 2 * wallThickness : boardWidth;
+// Level 8: 外围墙 + 双横墙（三区域）
+function createLevel8() {
+    createOuterWalls();
     
-    let rows = 5;
-    for (let r = 0; r < rows; r++) {
-        let cols = rows - r;
-        let totalWidth = cols * blockWidth + (cols - 1) * 10;
-        let centerOffset = (availableWidth - totalWidth) / 2;
-        
-        for (let c = 0; c < cols; c++) {
+    innerWalls.push({ x: 60, y: 140, width: boardWidth - 120, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: 60, y: 240, width: boardWidth - 120, height: wallThickness, color: '#888' });
+    
+    innerWalls.push({ x: 150, y: 140, width: wallThickness, height: 110, color: '#888' });
+    innerWalls.push({ x: 340, y: 140, width: wallThickness, height: 110, color: '#888' });
+    
+    blockArray = [];
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 7; c++) {
             addBlock(
-                startX + centerOffset + c * blockWidth + c * 10,
+                wallThickness + 25 + c * blockWidth + c * 10,
                 blockY + r * blockHeight + r * 10,
-                getRandomColor()
+                'red'
             );
+        }
+    }
+    blockCount = blockArray.length;
+}
+
+// Level 9: 外围墙 + 中心十字障碍
+function createLevel9() {
+    createOuterWalls();
+    
+    innerWalls.push({
+        x: boardWidth / 2 - wallThickness / 2,
+        y: 80,
+        width: wallThickness,
+        height: 180,
+        color: '#888'
+    });
+    innerWalls.push({
+        x: 80,
+        y: 170,
+        width: boardWidth - 160,
+        height: wallThickness,
+        color: '#888'
+    });
+    
+    blockArray = [];
+    let colors = ['skyblue', 'orange', 'lime', 'pink'];
+    let positions = [
+        { x: wallThickness + 20, y: blockY, cols: 3, rows: 3 },
+        { x: boardWidth / 2 + 20, y: blockY, cols: 3, rows: 3 },
+        { x: wallThickness + 20, y: 200, cols: 3, rows: 2 },
+        { x: boardWidth / 2 + 20, y: 200, cols: 3, rows: 2 }
+    ];
+    
+    for (let i = 0; i < positions.length; i++) {
+        let pos = positions[i];
+        for (let r = 0; r < pos.rows; r++) {
+            for (let c = 0; c < pos.cols; c++) {
+                addBlock(
+                    pos.x + c * blockWidth + c * 10,
+                    pos.y + r * blockHeight + r * 10,
+                    colors[i]
+                );
+            }
+        }
+    }
+    blockCount = blockArray.length;
+}
+
+// Level 10: 终极迷宫挑战
+function createLevel10() {
+    createOuterWalls();
+    
+    innerWalls.push({ x: 60, y: 120, width: 120, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: 320, y: 120, width: 120, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: 180, y: 120, width: wallThickness, height: 60, color: '#777' });
+    innerWalls.push({ x: 310, y: 120, width: wallThickness, height: 60, color: '#777' });
+    innerWalls.push({ x: 100, y: 180, width: 80, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: 320, y: 180, width: 80, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: 200, y: 200, width: wallThickness, height: 80, color: '#777' });
+    innerWalls.push({ x: 290, y: 200, width: wallThickness, height: 80, color: '#777' });
+    innerWalls.push({ x: 60, y: 260, width: 100, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: 340, y: 260, width: 100, height: wallThickness, color: '#777' });
+    
+    blockArray = [];
+    let rainbow = ['red', 'orange', 'yellow', 'lime', 'cyan', 'skyblue', 'pink'];
+    
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 7; c++) {
+            if (!((r === 2 && (c === 1 || c === 6)) || (r === 3 && (c === 3 || c === 4)))) {
+                addBlock(
+                    wallThickness + 25 + c * blockWidth + c * 10,
+                    blockY + r * blockHeight + r * 10,
+                    rainbow[r]
+                );
+            }
         }
     }
     blockCount = blockArray.length;
@@ -520,15 +501,9 @@ function addBlock(x, y, color) {
     });
 }
 
-function getRandomColor() {
-    const colors = ['skyblue', 'orange', 'lime', 'pink', 'yellow', 'cyan'];
-    return colors[Math.floor(Math.random() * colors.length)];
-}
-
 function update() {
     context.clearRect(0, 0, board.width, board.height);
     
-    // Update player power-up timers
     if (player.widthTimer > 0) {
         player.widthTimer--;
         if (player.widthTimer <= 0) {
@@ -542,17 +517,19 @@ function update() {
         powerUpNotification.timer--;
     }
     
-    // Draw walls
-    context.fillStyle = 'gray';
+    context.fillStyle = '#666';
     for (let wall of walls) {
         context.fillRect(wall.x, wall.y, wall.width, wall.height);
     }
     
-    // Player
+    context.fillStyle = '#888';
+    for (let wall of innerWalls) {
+        context.fillRect(wall.x, wall.y, wall.width, wall.height);
+    }
+    
     context.fillStyle = 'lightgreen';
     context.fillRect(player.x, player.y, player.width, player.height);
     
-    // Update balls
     for (let i = balls.length - 1; i >= 0; i--) {
         let ball = balls[i];
         
@@ -570,7 +547,9 @@ function update() {
         context.fillRect(ball.x, ball.y, ball.width, ball.height);
         
         let wallHit = false;
-        for (let wall of walls) {
+        let allWalls = walls.concat(innerWalls);
+        
+        for (let wall of allWalls) {
             if (detectCollision(ball, wall)) {
                 let overlapLeft = (ball.x + ball.width) - wall.x;
                 let overlapRight = (wall.x + wall.width) - ball.x;
@@ -607,12 +586,16 @@ function update() {
         }
         
         if (detectCollision(ball, player)) {
-            if (ball.y + ball.height - player.y < 5) {
+            if (ball.y + ball.height - player.y < 8) {
                 ball.velocityY = -Math.abs(ball.velocityY);
                 let hitPos = (ball.x + ball.width / 2) - player.x;
                 let paddleCenter = player.width / 2;
                 let angle = (hitPos - paddleCenter) / paddleCenter;
-                ball.velocityX = angle * 5;
+                ball.velocityX = angle * (ballBaseSpeed * 0.8);
+                let speed = Math.sqrt(ball.velocityX * ball.velocityX + ball.velocityY * ball.velocityY);
+                let factor = ballBaseSpeed / speed;
+                ball.velocityX *= factor;
+                ball.velocityY *= factor;
             }
             else if (player.y + player.height - ball.y < 5) {
                 ball.velocityY = Math.abs(ball.velocityY);
@@ -629,7 +612,7 @@ function update() {
                 score += 100;
                 blockCount -= 1;
                 
-                if (Math.random() < 0.2) {
+                if (Math.random() < 0.25) {
                     spawnPowerUp(block.x + block.width / 2, block.y + block.height / 2);
                 }
                 
@@ -660,13 +643,11 @@ function update() {
         return;
     }
     
-    // Update power-ups - 掉出屏幕只是消失，不影响游戏
     for (let i = powerUps.length - 1; i >= 0; i--) {
         let powerUp = powerUps[i];
         powerUp.y += powerUpSpeed;
         
         context.fillStyle = powerUp.color;
-        
         let pulse = 1 + Math.sin(Date.now() / 100) * 0.1;
         let pw = powerUpWidth * pulse;
         let ph = powerUpHeight * pulse;
@@ -689,7 +670,6 @@ function update() {
         }
         context.fillText(symbol, powerUp.x, powerUp.y);
         
-        // 道具掉出屏幕 - 只是移除，不影响游戏
         if (powerUp.y > boardHeight) {
             powerUps.splice(i, 1);
             continue;
@@ -709,7 +689,7 @@ function update() {
     }
     
     if (blockCount == 0) {
-        score += 100 * blockRows * blockColumns;
+        score += 500;
         if (currentLevel < maxLevels) {
             context.font = '24px sans-serif';
             context.fillText('Level Complete!', boardWidth / 2 - 70, boardHeight / 2);
@@ -725,19 +705,20 @@ function update() {
         }
     }
     
-    // 调整分数显示位置 - 移到更下面避免被遮挡
-    context.font = '20px sans-serif';
+    context.font = '18px sans-serif';
     context.fillStyle = 'white';
-    context.fillText('Score: ' + score, 10, 45);
     
-    context.fillText('Level: ' + currentLevel, boardWidth - 90, 45);
+    let textY = boardHeight - 20;
+    context.fillText('Score: ' + score, 20, textY);
+    context.fillText('Level: ' + currentLevel, boardWidth - 100, textY);
     
-    // 道具提示也调整位置
     if (powerUpNotification.timer > 0) {
         if (Math.floor(powerUpNotification.timer / 5) % 2 === 0) {
             context.font = '16px sans-serif';
             context.fillStyle = 'yellow';
-            context.fillText(powerUpNotification.text, 100, 45);
+            let centerX = boardWidth / 2;
+            let textWidth = context.measureText(powerUpNotification.text).width;
+            context.fillText(powerUpNotification.text, centerX - textWidth / 2, textY);
         }
     }
 }
@@ -772,14 +753,14 @@ function applyPowerUp(powerUp) {
             let extension = 40;
             player.width += extension;
             player.x -= extension / 2;
-            player.widthTimer = 300;
+            player.widthTimer = 360;
             showPowerUpNotification('Paddle Extended!');
             break;
             
         case PowerUpType.PIERCE:
             for (let ball of balls) {
                 ball.piercing = true;
-                ball.pierceTimer = 300;
+                ball.pierceTimer = 360;
             }
             showPowerUpNotification('Piercing Ball!');
             break;

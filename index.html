@@ -18,9 +18,16 @@
             <button id="startGameBtn">开始游戏</button>
             <button id="selectLevelBtn">选择关卡</button>
             
-            <div class="speed-control">
-                <label for="speedSlider">挡板速度: <span id="speedValue">50</span></label>
-                <input type="range" id="speedSlider" min="10" max="200" value="50" step="10">
+            <div class="settings-section">
+                <h3>难度设置</h3>
+                <div class="speed-control">
+                    <label for="speedSlider">挡板速度: <span id="speedValue">50</span></label>
+                    <input type="range" id="speedSlider" min="10" max="200" value="50" step="10">
+                </div>
+                <div class="speed-control">
+                    <label for="ballSpeedSlider">小球速度: <span id="ballSpeedValue">5</span></label>
+                    <input type="range" id="ballSpeedSlider" min="2" max="15" value="5" step="1">
+                </div>
             </div>
         </div>
         

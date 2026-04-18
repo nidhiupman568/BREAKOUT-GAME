@@ -69,11 +69,27 @@ body {
     font-size: 16px;
 }
 
-/* Speed control slider */
-.speed-control {
+/* Settings section */
+.settings-section {
     margin-top: 30px;
     padding-top: 20px;
     border-top: 2px solid rgba(135, 206, 235, 0.5);
+}
+
+.settings-section h3 {
+    color: skyblue;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+/* Speed control slider */
+.speed-control {
+    margin-top: 20px;
+}
+
+.speed-control:first-child {
+    margin-top: 0;
 }
 
 .speed-control label {
@@ -119,7 +135,7 @@ body {
     border: none;
 }
 
-#speedValue {
+#speedValue, #ballSpeedValue {
     color: white;
     font-weight: bold;
 }
