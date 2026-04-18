@@ -13,6 +13,34 @@
         </center>
     </div>
     <body>
+        <div id="mainMenu" class="menu">
+            <h2>主菜单</h2>
+            <button id="startGameBtn">开始游戏</button>
+            <button id="selectLevelBtn">选择关卡</button>
+            
+            <div class="speed-control">
+                <label for="speedSlider">挡板速度: <span id="speedValue">50</span></label>
+                <input type="range" id="speedSlider" min="10" max="200" value="50" step="10">
+            </div>
+        </div>
+        
+        <div id="levelSelect" class="menu" style="display: none;">
+            <h2>选择关卡</h2>
+            <div class="level-grid">
+                <button id="level1Btn">第 1 关</button>
+                <button id="level2Btn">第 2 关</button>
+                <button id="level3Btn">第 3 关</button>
+                <button id="level4Btn">第 4 关</button>
+                <button id="level5Btn">第 5 关</button>
+                <button id="level6Btn">第 6 关</button>
+                <button id="level7Btn">第 7 关</button>
+                <button id="level8Btn">第 8 关</button>
+                <button id="level9Btn">第 9 关</button>
+                <button id="level10Btn">第 10 关</button>
+            </div>
+            <button id="backToMenuBtn">返回主菜单</button>
+        </div>
+        
         <canvas id="board"></canvas>
     </body>
 </html>

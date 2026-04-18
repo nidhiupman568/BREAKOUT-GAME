@@ -1,5 +1,8 @@
 body {
     text-align: center;
+    background-color: #1a1a1a;
+    color: white;
+    font-family: Arial, sans-serif;
 }
 
 #board {
@@ -7,4 +10,116 @@ body {
     border-top: 5px solid skyblue;
     border-left: 5px solid skyblue;
     border-right: 5px solid skyblue;
+    display: none;
+}
+
+.menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 40px;
+    border-radius: 20px;
+    border: 3px solid skyblue;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.menu h2 {
+    color: skyblue;
+    margin-top: 0;
+    margin-bottom: 30px;
+    font-size: 32px;
+}
+
+.menu button {
+    display: block;
+    width: 200px;
+    margin: 15px auto;
+    padding: 15px;
+    font-size: 18px;
+    background-color: skyblue;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.menu button:hover {
+    background-color: #87CEFA;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px skyblue;
+}
+
+/* Level grid for 10 levels */
+.level-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.level-grid button {
+    width: 120px;
+    margin: 5px;
+    padding: 12px;
+    font-size: 16px;
+}
+
+/* Speed control slider */
+.speed-control {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(135, 206, 235, 0.5);
+}
+
+.speed-control label {
+    display: block;
+    margin-bottom: 10px;
+    color: skyblue;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.speed-control input[type="range"] {
+    width: 200px;
+    height: 10px;
+    border-radius: 5px;
+    background: #333;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.speed-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: skyblue;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.speed-control input[type="range"]::-webkit-slider-thumb:hover {
+    background: #87CEFA;
+    box-shadow: 0 0 15px skyblue;
+    transform: scale(1.1);
+}
+
+.speed-control input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: skyblue;
+    cursor: pointer;
+    border: none;
+}
+
+#speedValue {
+    color: white;
+    font-weight: bold;
 }
