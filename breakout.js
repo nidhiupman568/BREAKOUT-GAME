@@ -36,16 +36,15 @@ let ballHeight = 10;
 let balls = [];
 
 let blockArray = [];
-let blockWidth = 50;
+let blockWidth = 45;
 let blockHeight = 10;
 let blockCount = 0;
 
-let blockX = 15;
-let blockY = 60;
+let wallThickness = 10;
+let gapSize = 15;
 
 let walls = [];
 let innerWalls = [];
-let wallThickness = 10;
 
 let powerUps = [];
 let powerUpWidth = 20;
@@ -199,14 +198,61 @@ function createOuterWalls() {
     walls.push({ x: 0, y: 0, width: boardWidth, height: wallThickness, color: '#666' });
 }
 
+function getPlayAreaLeft() {
+    return walls.length > 0 ? wallThickness + gapSize : gapSize;
+}
+
+function getPlayAreaRight() {
+    return walls.length > 0 ? boardWidth - wallThickness - gapSize : boardWidth - gapSize;
+}
+
+function getPlayAreaTop() {
+    return walls.length > 0 ? wallThickness + gapSize : gapSize;
+}
+
+function getPlayAreaWidth() {
+    return getPlayAreaRight() - getPlayAreaLeft();
+}
+
+function addBlock(x, y, color) {
+    blockArray.push({
+        x: x,
+        y: y,
+        width: blockWidth,
+        height: blockHeight,
+        break: false,
+        color: color
+    });
+}
+
+function checkOverlapWithWalls(x, y, w, h) {
+    let allWalls = walls.concat(innerWalls);
+    for (let wall of allWalls) {
+        if (x < wall.x + wall.width + gapSize &&
+            x + w > wall.x - gapSize &&
+            y < wall.y + wall.height + gapSize &&
+            y + h > wall.y - gapSize) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Level 1: 入门 - 无墙，简单网格
 function createLevel1() {
     blockArray = [];
+    let startX = getPlayAreaLeft();
+    let startY = 50;
+    let cols = 8;
+    let spacing = 10;
+    let totalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let offsetX = startX + (getPlayAreaWidth() - totalWidth) / 2;
+    
     for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 8; c++) {
+        for (let c = 0; c < cols; c++) {
             addBlock(
-                blockX + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
+                offsetX + c * blockWidth + c * spacing,
+                startY + r * blockHeight + r * spacing,
                 'skyblue'
             );
         }
@@ -214,26 +260,37 @@ function createLevel1() {
     blockCount = blockArray.length;
 }
 
-// Level 2: 外围墙 + 中间一道横障碍墙
+// Level 2: 外围墙 + 中间横障碍墙
 function createLevel2() {
     createOuterWalls();
     
+    let wallY = 200;
     innerWalls.push({
-        x: 60,
-        y: 200,
-        width: boardWidth - 120,
+        x: getPlayAreaLeft(),
+        y: wallY,
+        width: getPlayAreaWidth(),
         height: wallThickness,
         color: '#888'
     });
     
     blockArray = [];
+    let startX = getPlayAreaLeft();
+    let startY = getPlayAreaTop() + 20;
+    let cols = 7;
+    let spacing = 10;
+    let totalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let offsetX = startX + (getPlayAreaWidth() - totalWidth) / 2;
+    
     for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 7; c++) {
-            addBlock(
-                wallThickness + 25 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
-                'orange'
-            );
+        let blockY = startY + r * blockHeight + r * spacing;
+        if (blockY + blockHeight + gapSize < wallY) {
+            for (let c = 0; c < cols; c++) {
+                addBlock(
+                    offsetX + c * blockWidth + c * spacing,
+                    blockY,
+                    'orange'
+                );
+            }
         }
     }
     blockCount = blockArray.length;
@@ -243,25 +300,38 @@ function createLevel2() {
 function createLevel3() {
     createOuterWalls();
     
+    let wallX = boardWidth / 2 - wallThickness / 2;
     innerWalls.push({
-        x: boardWidth / 2 - wallThickness / 2,
-        y: 60,
+        x: wallX,
+        y: getPlayAreaTop(),
         width: wallThickness,
-        height: 140,
+        height: 160,
         color: '#888'
     });
     
     blockArray = [];
+    let startY = getPlayAreaTop() + 20;
+    let cols = 3;
+    let spacing = 10;
+    
+    let leftAreaWidth = wallX - getPlayAreaLeft();
+    let leftTotalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let leftOffset = getPlayAreaLeft() + (leftAreaWidth - leftTotalWidth) / 2;
+    
+    let rightAreaWidth = getPlayAreaRight() - (wallX + wallThickness);
+    let rightTotalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let rightOffset = wallX + wallThickness + (rightAreaWidth - rightTotalWidth) / 2;
+    
     for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 3; c++) {
+        for (let c = 0; c < cols; c++) {
             addBlock(
-                wallThickness + 20 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
+                leftOffset + c * blockWidth + c * spacing,
+                startY + r * blockHeight + r * spacing,
                 'lime'
             );
             addBlock(
-                boardWidth / 2 + 20 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
+                rightOffset + c * blockWidth + c * spacing,
+                startY + r * blockHeight + r * spacing,
                 'pink'
             );
         }
@@ -273,69 +343,101 @@ function createLevel3() {
 function createLevel4() {
     createOuterWalls();
     
+    let cornerX = getPlayAreaLeft() + 60;
+    let cornerY = 160;
+    
     innerWalls.push({
-        x: 100,
-        y: 150,
+        x: cornerX,
+        y: cornerY,
         width: 150,
         height: wallThickness,
         color: '#888'
     });
     innerWalls.push({
-        x: 100,
-        y: 150,
+        x: cornerX,
+        y: cornerY,
         width: wallThickness,
         height: 80,
         color: '#888'
     });
     
     blockArray = [];
+    let startY = getPlayAreaTop() + 20;
+    let cols = 7;
+    let spacing = 10;
+    let totalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let offsetX = getPlayAreaLeft() + (getPlayAreaWidth() - totalWidth) / 2;
+    
     for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 7; c++) {
-            addBlock(
-                wallThickness + 25 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
-                'cyan'
-            );
+        let blockY = startY + r * blockHeight + r * spacing;
+        if (blockY + blockHeight + gapSize < cornerY) {
+            for (let c = 0; c < cols; c++) {
+                addBlock(
+                    offsetX + c * blockWidth + c * spacing,
+                    blockY,
+                    'cyan'
+                );
+            }
         }
     }
     blockCount = blockArray.length;
 }
 
-// Level 5: 外围墙 + 左右竖墙（3通道）
+// Level 5: 外围墙 + 左右竖墙（三通道）
 function createLevel5() {
     createOuterWalls();
     
+    let wall1X = getPlayAreaLeft() + getPlayAreaWidth() * 0.33;
+    let wall2X = getPlayAreaLeft() + getPlayAreaWidth() * 0.67;
+    
     innerWalls.push({
-        x: 150,
-        y: 80,
+        x: wall1X,
+        y: getPlayAreaTop() + 20,
         width: wallThickness,
-        height: 150,
+        height: 140,
         color: '#888'
     });
     innerWalls.push({
-        x: 340,
-        y: 80,
+        x: wall2X,
+        y: getPlayAreaTop() + 20,
         width: wallThickness,
-        height: 150,
+        height: 140,
         color: '#888'
     });
     
     blockArray = [];
+    let startY = getPlayAreaTop() + 20;
+    let cols = 2;
+    let spacing = 10;
+    
+    let zone1Width = wall1X - getPlayAreaLeft();
+    let zone1TotalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let zone1Offset = getPlayAreaLeft() + (zone1Width - zone1TotalWidth) / 2;
+    
+    let zone2Width = wall2X - (wall1X + wallThickness);
+    let zone2TotalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let zone2Offset = wall1X + wallThickness + (zone2Width - zone2TotalWidth) / 2;
+    
+    let zone3Width = getPlayAreaRight() - (wall2X + wallThickness);
+    let zone3TotalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let zone3Offset = wall2X + wallThickness + (zone3Width - zone3TotalWidth) / 2;
+    
     for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 2; c++) {
+        let blockY = startY + r * blockHeight + r * spacing;
+        for (let c = 0; c < cols; c++) {
             addBlock(
-                wallThickness + 20 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
+                zone1Offset + c * blockWidth + c * spacing,
+                blockY,
                 'yellow'
             );
             addBlock(
-                180 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
+                zone2Offset + c * blockWidth + c * spacing,
+                blockY,
                 'orange'
             );
             addBlock(
-                370 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
+                zone3Offset + c * blockWidth + c * spacing,
+                blockY,
                 'skyblue'
             );
         }
@@ -343,25 +445,31 @@ function createLevel5() {
     blockCount = blockArray.length;
 }
 
-// Level 6: 外围墙 + 迷宫式障碍（交替短墙）
+// Level 6: 外围墙 + 迷宫式交替短墙
 function createLevel6() {
     createOuterWalls();
     
-    innerWalls.push({ x: 60, y: 120, width: 100, height: wallThickness, color: '#888' });
-    innerWalls.push({ x: 340, y: 120, width: 100, height: wallThickness, color: '#888' });
-    innerWalls.push({ x: 150, y: 170, width: 100, height: wallThickness, color: '#888' });
-    innerWalls.push({ x: 250, y: 170, width: 100, height: wallThickness, color: '#888' });
-    innerWalls.push({ x: 100, y: 220, width: 80, height: wallThickness, color: '#888' });
-    innerWalls.push({ x: 320, y: 220, width: 80, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: getPlayAreaLeft() + 40, y: 120, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: getPlayAreaRight() - 140, y: 120, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: getPlayAreaLeft() + 120, y: 170, width: 100, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: getPlayAreaRight() - 220, y: 170, width: 100, height: wallThickness, color: '#888' });
     
     blockArray = [];
+    let startY = getPlayAreaTop() + 20;
+    let cols = 7;
+    let spacing = 10;
+    let totalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let offsetX = getPlayAreaLeft() + (getPlayAreaWidth() - totalWidth) / 2;
+    
     for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 7; c++) {
-            if (!((r === 1 && (c === 2 || c === 5)) || (r === 2 && (c === 3 || c === 4)))) {
+        let blockY = startY + r * blockHeight + r * spacing;
+        if (blockY + blockHeight + gapSize < 120) {
+            for (let c = 0; c < cols; c++) {
+                let colors = ['skyblue', 'orange', 'lime', 'pink'];
                 addBlock(
-                    wallThickness + 25 + c * blockWidth + c * 10,
-                    blockY + r * blockHeight + r * 10,
-                    ['skyblue', 'orange', 'lime', 'pink', 'yellow'][r % 5]
+                    offsetX + c * blockWidth + c * spacing,
+                    blockY,
+                    colors[r % 4]
                 );
             }
         }
@@ -374,19 +482,25 @@ function createLevel7() {
     innerWalls.push({ x: 80, y: 130, width: 80, height: wallThickness, color: '#aaa' });
     innerWalls.push({ x: 340, y: 130, width: 80, height: wallThickness, color: '#aaa' });
     innerWalls.push({ x: 200, y: 180, width: 100, height: wallThickness, color: '#aaa' });
-    innerWalls.push({ x: 150, y: 230, width: 60, height: wallThickness, color: '#aaa' });
-    innerWalls.push({ x: 290, y: 230, width: 60, height: wallThickness, color: '#aaa' });
     
     blockArray = [];
+    let startX = getPlayAreaLeft();
+    let startY = 50;
+    
     for (let r = 0; r < 5; r++) {
         let cols = r % 2 === 0 ? 8 : 7;
         let offset = r % 2 === 0 ? 0 : 30;
         for (let c = 0; c < cols; c++) {
-            addBlock(
-                blockX + offset + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
-                ['lime', 'skyblue'][r % 2]
-            );
+            let bx = startX + offset + c * blockWidth + c * 10;
+            let by = startY + r * blockHeight + r * 10;
+            
+            if (!checkOverlapWithWalls(bx, by, blockWidth, blockHeight)) {
+                addBlock(
+                    bx,
+                    by,
+                    ['lime', 'skyblue'][r % 2]
+                );
+            }
         }
     }
     blockCount = blockArray.length;
@@ -396,20 +510,29 @@ function createLevel7() {
 function createLevel8() {
     createOuterWalls();
     
-    innerWalls.push({ x: 60, y: 140, width: boardWidth - 120, height: wallThickness, color: '#888' });
-    innerWalls.push({ x: 60, y: 240, width: boardWidth - 120, height: wallThickness, color: '#888' });
+    innerWalls.push({ x: getPlayAreaLeft(), y: 140, width: getPlayAreaWidth(), height: wallThickness, color: '#888' });
+    innerWalls.push({ x: getPlayAreaLeft(), y: 240, width: getPlayAreaWidth(), height: wallThickness, color: '#888' });
     
-    innerWalls.push({ x: 150, y: 140, width: wallThickness, height: 110, color: '#888' });
-    innerWalls.push({ x: 340, y: 140, width: wallThickness, height: 110, color: '#888' });
+    innerWalls.push({ x: getPlayAreaLeft() + getPlayAreaWidth() * 0.3, y: 140, width: wallThickness, height: 110, color: '#888' });
+    innerWalls.push({ x: getPlayAreaLeft() + getPlayAreaWidth() * 0.7, y: 140, width: wallThickness, height: 110, color: '#888' });
     
     blockArray = [];
+    let startY = getPlayAreaTop() + 20;
+    let cols = 7;
+    let spacing = 10;
+    let totalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let offsetX = getPlayAreaLeft() + (getPlayAreaWidth() - totalWidth) / 2;
+    
     for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 7; c++) {
-            addBlock(
-                wallThickness + 25 + c * blockWidth + c * 10,
-                blockY + r * blockHeight + r * 10,
-                'red'
-            );
+        let blockY = startY + r * blockHeight + r * spacing;
+        if (blockY + blockHeight + gapSize < 140) {
+            for (let c = 0; c < cols; c++) {
+                addBlock(
+                    offsetX + c * blockWidth + c * spacing,
+                    blockY,
+                    'red'
+                );
+            }
         }
     }
     blockCount = blockArray.length;
@@ -419,39 +542,48 @@ function createLevel8() {
 function createLevel9() {
     createOuterWalls();
     
+    let centerX = boardWidth / 2;
+    let centerY = 170;
+    
     innerWalls.push({
-        x: boardWidth / 2 - wallThickness / 2,
-        y: 80,
+        x: centerX - wallThickness / 2,
+        y: getPlayAreaTop() + 20,
         width: wallThickness,
-        height: 180,
+        height: 160,
         color: '#888'
     });
     innerWalls.push({
-        x: 80,
-        y: 170,
-        width: boardWidth - 160,
+        x: getPlayAreaLeft() + 30,
+        y: centerY,
+        width: getPlayAreaWidth() - 60,
         height: wallThickness,
         color: '#888'
     });
     
     blockArray = [];
     let colors = ['skyblue', 'orange', 'lime', 'pink'];
+    
     let positions = [
-        { x: wallThickness + 20, y: blockY, cols: 3, rows: 3 },
-        { x: boardWidth / 2 + 20, y: blockY, cols: 3, rows: 3 },
-        { x: wallThickness + 20, y: 200, cols: 3, rows: 2 },
-        { x: boardWidth / 2 + 20, y: 200, cols: 3, rows: 2 }
+        { x: getPlayAreaLeft(), y: getPlayAreaTop() + 20, cols: 3, rows: 3, maxY: centerY },
+        { x: centerX + gapSize, y: getPlayAreaTop() + 20, cols: 3, rows: 3, maxY: centerY }
     ];
     
     for (let i = 0; i < positions.length; i++) {
         let pos = positions[i];
+        let totalWidth = pos.cols * blockWidth + (pos.cols - 1) * 10;
+        let zoneWidth = (i === 0) ? (centerX - wallThickness/2 - getPlayAreaLeft()) : (getPlayAreaRight() - centerX - wallThickness/2);
+        let offsetX = pos.x + (zoneWidth - totalWidth) / 2;
+        
         for (let r = 0; r < pos.rows; r++) {
-            for (let c = 0; c < pos.cols; c++) {
-                addBlock(
-                    pos.x + c * blockWidth + c * 10,
-                    pos.y + r * blockHeight + r * 10,
-                    colors[i]
-                );
+            let blockY = pos.y + r * blockHeight + r * 10;
+            if (blockY + blockHeight + gapSize < pos.maxY) {
+                for (let c = 0; c < pos.cols; c++) {
+                    addBlock(
+                        offsetX + c * blockWidth + c * 10,
+                        blockY,
+                        colors[i]
+                    );
+                }
             }
         }
     }
@@ -462,43 +594,36 @@ function createLevel9() {
 function createLevel10() {
     createOuterWalls();
     
-    innerWalls.push({ x: 60, y: 120, width: 120, height: wallThickness, color: '#777' });
-    innerWalls.push({ x: 320, y: 120, width: 120, height: wallThickness, color: '#777' });
-    innerWalls.push({ x: 180, y: 120, width: wallThickness, height: 60, color: '#777' });
-    innerWalls.push({ x: 310, y: 120, width: wallThickness, height: 60, color: '#777' });
-    innerWalls.push({ x: 100, y: 180, width: 80, height: wallThickness, color: '#777' });
-    innerWalls.push({ x: 320, y: 180, width: 80, height: wallThickness, color: '#777' });
-    innerWalls.push({ x: 200, y: 200, width: wallThickness, height: 80, color: '#777' });
-    innerWalls.push({ x: 290, y: 200, width: wallThickness, height: 80, color: '#777' });
-    innerWalls.push({ x: 60, y: 260, width: 100, height: wallThickness, color: '#777' });
-    innerWalls.push({ x: 340, y: 260, width: 100, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: getPlayAreaLeft() + 30, y: 120, width: 120, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: getPlayAreaRight() - 150, y: 120, width: 120, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: getPlayAreaLeft() + getPlayAreaWidth() * 0.35, y: 120, width: wallThickness, height: 60, color: '#777' });
+    innerWalls.push({ x: getPlayAreaLeft() + getPlayAreaWidth() * 0.65, y: 120, width: wallThickness, height: 60, color: '#777' });
+    innerWalls.push({ x: getPlayAreaLeft() + 60, y: 180, width: 80, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: getPlayAreaRight() - 140, y: 180, width: 80, height: wallThickness, color: '#777' });
+    innerWalls.push({ x: getPlayAreaLeft() + getPlayAreaWidth() * 0.4, y: 200, width: wallThickness, height: 80, color: '#777' });
+    innerWalls.push({ x: getPlayAreaLeft() + getPlayAreaWidth() * 0.6, y: 200, width: wallThickness, height: 80, color: '#777' });
     
     blockArray = [];
-    let rainbow = ['red', 'orange', 'yellow', 'lime', 'cyan', 'skyblue', 'pink'];
+    let startY = getPlayAreaTop() + 20;
+    let cols = 7;
+    let spacing = 10;
+    let totalWidth = cols * blockWidth + (cols - 1) * spacing;
+    let offsetX = getPlayAreaLeft() + (getPlayAreaWidth() - totalWidth) / 2;
+    let rainbow = ['red', 'orange', 'yellow', 'lime', 'cyan'];
     
-    for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 7; c++) {
-            if (!((r === 2 && (c === 1 || c === 6)) || (r === 3 && (c === 3 || c === 4)))) {
+    for (let r = 0; r < 4; r++) {
+        let blockY = startY + r * blockHeight + r * spacing;
+        if (blockY + blockHeight + gapSize < 120) {
+            for (let c = 0; c < cols; c++) {
                 addBlock(
-                    wallThickness + 25 + c * blockWidth + c * 10,
-                    blockY + r * blockHeight + r * 10,
-                    rainbow[r]
+                    offsetX + c * blockWidth + c * spacing,
+                    blockY,
+                    rainbow[r % 5]
                 );
             }
         }
     }
     blockCount = blockArray.length;
-}
-
-function addBlock(x, y, color) {
-    blockArray.push({
-        x: x,
-        y: y,
-        width: blockWidth,
-        height: blockHeight,
-        break: false,
-        color: color
-    });
 }
 
 function update() {
@@ -709,8 +834,13 @@ function update() {
     context.fillStyle = 'white';
     
     let textY = boardHeight - 20;
-    context.fillText('Score: ' + score, 20, textY);
-    context.fillText('Level: ' + currentLevel, boardWidth - 100, textY);
+    let textX = walls.length > 0 ? (wallThickness + gapSize + 5) : 25;
+    context.fillText('Score: ' + score, textX, textY);
+    
+    let levelText = 'Level: ' + currentLevel;
+    let levelTextWidth = context.measureText(levelText).width;
+    let levelX = walls.length > 0 ? (boardWidth - wallThickness - gapSize - levelTextWidth - 5) : (boardWidth - levelTextWidth - 25);
+    context.fillText(levelText, levelX, textY);
     
     if (powerUpNotification.timer > 0) {
         if (Math.floor(powerUpNotification.timer / 5) % 2 === 0) {
@@ -815,9 +945,9 @@ function handleKeyDown(e) {
                 player.x = nextPlayerX;
             } else {
                 if (walls.length > 0) {
-                    player.x = wallThickness;
+                    player.x = wallThickness + gapSize;
                 } else {
-                    player.x = 0;
+                    player.x = gapSize;
                 }
             }
         }
@@ -827,9 +957,9 @@ function handleKeyDown(e) {
                 player.x = nextPlayerX;
             } else {
                 if (walls.length > 0) {
-                    player.x = boardWidth - wallThickness - player.width;
+                    player.x = boardWidth - wallThickness - gapSize - player.width;
                 } else {
-                    player.x = boardWidth - player.width;
+                    player.x = boardWidth - gapSize - player.width;
                 }
             }
         }
@@ -841,9 +971,10 @@ function handleKeyDown(e) {
 
 function outOfBounds(xPosition) {
     if (walls.length > 0) {
-        return (xPosition < wallThickness || xPosition + player.width > boardWidth - wallThickness);
+        return (xPosition < wallThickness + gapSize || 
+                xPosition + player.width > boardWidth - wallThickness - gapSize);
     }
-    return (xPosition < 0 || xPosition + player.width > boardWidth);
+    return (xPosition < gapSize || xPosition + player.width > boardWidth - gapSize);
 }
 
 function detectCollision(a, b) {
